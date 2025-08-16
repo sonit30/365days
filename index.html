@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>365 Love Notes — For My Soulmate</title>
+<style>
+  :root{
+    --pink-1:#ffeef8;
+    --pink-2:#ffb6d5;
+    --pink-3:#ff84bf;
+    --accent:#ffffff;
+    --muted:#f6d7e6;
+    --shadow: 0 8px 28px rgba(255,129,182,0.18);
+    --radius:16px;
+    --calendar-width:260px;
+    --gap:14px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--pink-1),#fff);color:#3a1333}
+  /* Password overlay */
+  .overlay{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,rgba(255,182,199,0.96),rgba(255,223,239,0.96));z-index:60
+  }
+  .pwd-card{width:min(640px,94%);background:linear-gradient(180deg,var(--accent),#fff);border-radius:20px;padding:28px;box-shadow:var(--shadow);text-align:center}
+  .pwd-card h1{margin:0 0 6px;font-size:22px;color:#9b1b57}
+  .pwd-card p{margin:0 0 18px;color:#6b2444}
+  .pwd-input{display:flex;gap:8px;justify-content:center}
+  .pwd-input input{padding:12px 16px;border-radius:12px;border:2px solid var(--pink-2);font-size:16px;width:260px}
+  .pwd-input button{padding:12px 18px;border-radius:12px;background:var(--pink-3);border:none;color:white;font-weight:600;cursor:pointer}
+  .pwd-hint{font-size:12px;margin-top:10px;color:#7a3a4e}
+  /* Layout */
+  .app{display:flex;gap:var(--gap);padding:22px;max-width:1200px;margin:32px auto}
+  .sidebar{width:var(--calendar-width);background:linear-gradient(180deg,var(--muted),#fff);border-radius:18px;padding:16px;box-shadow:var(--shadow);height:calc(100vh - 120px);overflow:auto}
+  .main{flex:1;background:linear-gradient(180deg,#fff, #fff7fb);border-radius:18px;padding:20px;box-shadow:var(--shadow);height:calc(100vh - 120px);overflow:auto}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--pink-2),var(--pink-3));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:20px}
+  .brand h2{margin:0;color:#9b1b57}
+  /* Calendar grid */
+  .calendar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .day{position:relative;padding:10px;border-radius:10px;background:transparent;border:2px dashed rgba(155,27,87,0.12);text-align:center;cursor:pointer;user-select:none}
+  .day.read{opacity:0.6}
+  .day .num{font-weight:700;color:#9b1b57}
+  .day .cut{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+  .day .cut::after{content:"✂";font-size:22px;transform:rotate(-20deg);color:#9b1b57;opacity:0.95}
+  .search{display:flex;gap:8px;margin-bottom:12px}
+  .search input{flex:1;padding:10px;border-radius:10px;border:1px solid #ffd4e6}
+  .search button{padding:10px 12px;border-radius:10px;border:none;background:var(--pink-3);color:white}
+  /* Card area */
+  .card-view{display:flex;flex-direction:column;gap:18px}
+  .card{display:grid;grid-template-columns:140px 1fr;gap:18px;align-items:start;background:linear-gradient(180deg,var(--pink-1),#fff);padding:18px;border-radius:16px;border:1px solid rgba(155,27,87,0.06)}
+  .card .img{width:140px;height:140px;border-radius:12px;overflow:hidden;background-size:cover;background-position:center;flex-shrink:0}
+  .card .body{padding:6px}
+  .card h3{margin:0 0 8px;color:#811a4a}
+  .card p{margin:0 0 12px;line-height:1.6;white-space:pre-wrap}
+  .card .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mark-read{padding:8px 12px;border-radius:10px;border:none;background:var(--pink-3);color:white;cursor:pointer}
+  footer{margin-top:18px;text-align:center;color:#8b4a62;font-size:13px}
+
+  /* Mobile responsive styles */
+  @media (max-width:980px){
+    .app{
+      flex-direction:column;
+      padding:12px;
+    }
+    .sidebar{
+      width:100%;
+      height:auto;
+      order:2;
+    }
+    .main{
+      order:1;
+      height:auto;
+    }
+    .card{
+      grid-template-columns:1fr;
+      align-items:stretch;
+    }
+    .card .img{
+      width:100%;
+      height:320px; /* Full view image height */
+      border-radius:0; /* Edge-to-edge look */
+      background-size:cover;
+      background-position:center;
+    }
+    .calendar{
+      grid-template-columns:repeat(6,1fr);
+    }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="overlay" id="overlay" aria-hidden="false">
+  <div class="pwd-card" role="dialog" aria-modal="true">
+    <div class="brand"><div class="logo">💖</div><h1>Happy Birthday Yashveer!</h1></div>
+    <p> Yashveer please enter the special date to open your private collection notes given by your Sonit till your next birthday.</p>
+    <div class="pwd-input">
+      <input id="pwd" placeholder="Enter password" type="password" aria-label="password input" />
+      <button id="pwdBtn">Open</button>
+    </div>
+    <div class="pwd-hint">Hint: The default password is your<strong> DOB (6-digits) </strong></div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <aside class="sidebar" aria-label="calendar sidebar">
+    <div class="brand"><div class="logo">💌</div><h2>Your personal calender ji:</h2></div>
+
+    <div class="search">
+      <input id="daySearch" placeholder="Search day (1-365) or keyword" />
+      <button id="gotoBtn">Go</button>
+    </div>
+
+    <div class="calendar" id="calendar" role="list" aria-label="365 day calendar">
+      <!-- days generated by JS -->
+    </div>
+
+    <footer>
+      <small>Tap a day to open the note. Read notes stay marked.</small>
+    </footer>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="card-view" id="cardView">
+      <div class="card" id="card">
+        <div class="img" id="cardImg" style="background-image:url('Y.jpg')" role="img" aria-label="note image"></div>
+        <div class="body">
+          <h3 id="cardTitle">Welcome</h3>
+          <p id="cardText"></p>
+          <div class="meta">
+            <div id="cardDay">Day —</div>
+            <button class="mark-read" id="markReadBtn">Mark as read</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  // Password (change here if you want)
+  const PASSWORD = '180802';
+
+  // Local image filename (must be in same folder)
+  const IMAGE_FILE = 'Y.jpg';
+
+  // Read days stored key
+  const readKey = 'love365_readDays_v1';
+
+  // Grab DOM
+  const overlay = document.getElementById('overlay');
+  const pwdInput = document.getElementById('pwd');
+  const pwdBtn = document.getElementById('pwdBtn');
+  const app = document.getElementById('app');
+  const calendar = document.getElementById('calendar');
+  const cardImg = document.getElementById('cardImg');
+  const cardTitle = document.getElementById('cardTitle');
+  const cardText = document.getElementById('cardText');
+  const cardDay = document.getElementById('cardDay');
+  const markReadBtn = document.getElementById('markReadBtn');
+  const daySearch = document.getElementById('daySearch');
+  const gotoBtn = document.getElementById('gotoBtn');
+
+  // Load read days from storage
+  let readDays = new Set(JSON.parse(localStorage.getItem(readKey) || '[]'));
+  let currentDay = null;
+
+  // The user's full provided text (keeps original phrasing). We'll split and produce 365 short notes.
+  const userText = `
+I’ve never met you, yet you’ve held me closer than anyone else ever could.
+
+Your love is proof that the heart doesn’t need touch to feel safe.
+
+Even miles apart, you feel like home.
+
+I haven’t touched your hand, but I’ve held your heart.
+
+Your patience makes me believe in unconditional love.
+
+Somehow, you always know when I’m not okay.
+
+You’ve been my voice of reason when I couldn’t think clearly.
+
+You’ve been the one who brings light to my shadows.
+
+You’ve been my reason to believe in gentle love.
+
+You’ve been my reminder that love is felt, not just seen.
+
+You’ve been my constant thought in the quiet moments.
+
+You’ve been my soft place to land after hard days.
+
+You’ve been my calm tide after a stormy sea.
+
+You’ve been my safe distance that feels closer than touch.
+
+You’ve been my lesson in the beauty of waiting.
+
+You’ve been my comfort even in complete silence.
+
+You’ve been my evidence that real love can’t be rushed.
+
+You’ve been the gentle rhythm in my chaotic song.
+
+You’ve been the smile behind my tears.
+
+You’ve been the patient listener to my unspoken fears.
+
+You’ve been the strength I borrow when mine runs out.
+
+You’ve been the hand I imagine holding when I’m scared.
+
+You’ve been my reminder that I’m not alone.
+
+You’ve been my quiet prayer answered.
+
+You’ve been my reason to trust again.
+
+You’ve been my reminder that I’m worth the time.
+
+You’ve been my emotional anchor in drifting seas.
+
+You’ve been the one who reminds me to breathe.
+
+You’ve been my warmth when the world felt cold.
+
+You’ve been my reason to love myself more.
+
+You’ve been my courage to open up.
+
+You’ve been my safe thought when life gets loud.
+
+You’ve been my quiet happiness on long days.
+
+You’ve been the proof that love can be steady.
+
+You’ve been the reminder that I matter.
+
+You’ve been my voice in my head saying “you’re enough.”
+
+You’ve been the soft landing for my heavy thoughts.
+
+You’ve been my safe space to share my truth.
+
+You’ve been the comfort I didn’t know I was missing.
+
+You’ve been my steady light through my darkest nights.
+
+You’ve been the soul that feels like it’s known mine forever.
+
+You’ve been the reason I feel less afraid of life.
+
+You’ve been my reminder that good people still exist.
+
+You’ve been the heartbeat in my quiet moments.
+
+You’ve been my shelter in emotional storms.
+
+You’ve been my reason to wake up hopeful.
+
+You’ve been my reminder that love is not possession.
+
+You’ve been my proof that love can cross oceans.
+
+You’ve been my example of unconditional kindness.
+
+You’ve been my safe anchor in a drifting world.
+
+You’ve been my reason to laugh again.
+
+You’ve been my emotional lighthouse.
+
+You’ve been the reason my heart trusts slowly again.
+
+You’ve been my quiet constant in a changing world.
+
+You’ve been my hope that love lasts.
+
+You’ve been the light that stays even when it rains.
+
+You’ve been the one who never made me feel too much.
+
+You’ve been my soft reality better than my dreams.
+
+You’ve been my proof that distance means nothing.
+
+You’ve been my reminder to keep believing.
+
+You’ve been the calm to my overthinking mind.
+
+You’ve been the one I turn to without thinking twice.
+
+You’ve been my reason to trust my heart again.
+
+You’ve been my proof that love doesn’t have to hurt.
+
+You’ve been my reason to write words like these.
+
+You’ve been my gentle strength.
+
+You’ve been my safe harbor in every storm.
+
+You’ve been my quiet miracle.
+
+You’ve been the one who understands without asking.
+
+You’ve been my soft reassurance on hard nights.
+
+You’ve been my reason to believe in fate.
+
+You’ve been my reminder that love is worth the wait.
+
+You’ve been my quiet partner in life’s journey.
+
+You’ve been my constant in all my seasons.
+
+You’ve been my proof that hearts can connect across miles.
+
+You’ve been my reason to believe in forever.
+
+You’ve been my patience when I had none.
+
+You’ve been my calm in my chaos.
+
+You’ve been my steady reminder that I am loved.
+
+You’ve been my light when the path was unclear.
+
+You’ve been my comfort in my loneliness.
+
+You’ve been my safe emotional home.
+
+You’ve been my reminder that love doesn’t demand.
+
+You’ve been my softest thought before sleep.
+
+You’ve been my warmest feeling after tears.
+
+You’ve been my strength to get through hard weeks.
+
+You’ve been my reason to keep faith.
+
+You’ve been my joy in the middle of sorrow.
+
+You’ve been my steady soul in uncertain times.
+
+You’ve been my comfort even from afar.
+
+You’ve been my proof that love can be gentle.
+
+You’ve been my reason to smile unexpectedly.
+
+You’ve been my warmth through the distance.
+
+You’ve been my guide in emotional darkness.
+
+You’ve been my reminder that I’m worth love.
+
+You’ve been my hope in heartbreak.
+
+You’ve been my patient listener.
+
+You’ve been my favorite “how was your day?”
+
+You’ve been my invisible hug.
+
+You’ve been my proof that connection is real.
+
+You’ve been my gentle reminder to take care of myself.
+
+You’ve been my unexpected joy.
+
+You’ve been my reminder to trust the process.
+
+You’ve been my partner in unspoken understanding.
+
+You’ve been my constant in the unknown.
+
+You’ve been my anchor when I drift.
+
+You’ve been my reason to breathe easier.
+
+You’ve been my reminder that love doesn’t expire.
+
+You’ve been my peace when I’m restless.
+
+You’ve been my quiet cheer on my hard days.
+
+You’ve been my warmth in cold memories.
+
+You’ve been my proof that love is more than romance.
+
+You’ve been my gentle “I’m here” in silence.
+
+You’ve been my reason to feel safe.
+
+You’ve been my heart’s resting place.
+
+You’ve been my whisper of hope.
+
+You’ve been my emotional backbone.
+
+You’ve been my reminder that not all goodbyes hurt.
+
+You’ve been my steady light in long nights.
+
+You’ve been my reason to look forward.
+
+You’ve been my soul’s quiet twin.
+
+You’ve been my comfort zone in uncertainty.
+
+You’ve been my reminder that hearts heal.
+
+You’ve been my proof that love is a verb.
+
+You’ve been my safe thought on anxious days.
+
+You’ve been my quiet victory.
+
+You’ve been my healing presence.
+
+You’ve been my reminder that love can feel like home.
+
+You’ve been my emotional oxygen.
+
+You’ve been my reason to believe in invisible bonds.
+
+You’ve been my answer to unasked questions.
+
+You’ve been my reminder to slow down and feel.
+
+You’ve been my emotional sunrise.
+
+You’ve been my hope in the dark.
+
+You’ve been my steady pulse.
+
+You’ve been my proof that love can be peaceful.
+
+You’ve been my invisible but constant hug.
+
+You’ve been my reason to share my heart.
+
+You’ve been my favorite thought of the day.
+
+You’ve been my safe shore.
+
+You’ve been my calm before I fall asleep.
+
+You’ve been my reminder that love listens.
+
+You’ve been my gentle support.
+
+You’ve been my reminder to keep going.
+
+You’ve been my proof that love is patient.
+
+You’ve been my emotional homecoming.
+
+You’ve been my reason to dream again.
+
+You’ve been my unshakable constant.
+
+You’ve been my warmth in the waiting.
+
+You’ve been my proof that love adapts.
+
+You’ve been my gentle guide.
+
+You’ve been my reason to trust the future.
+
+You’ve been my source of quiet joy.
+
+You’ve been my reminder to open my heart.
+
+You’ve been my unexpected forever.
+
+You’ve been my emotional anchor chain.
+
+You’ve been my gift from the universe.
+
+You’ve been my reminder that love doesn’t vanish.
+
+You’ve been my constant thought in uncertainty.
+
+You’ve been my soft smile in the dark.
+
+You’ve been my proof that love finds a way.
+
+You’ve been my reason to write poetry.
+
+You’ve been my warmth when I’m cold inside.
+
+You’ve been my proof that love nurtures.
+
+You’ve been my healing space.
+
+You’ve been my constant star.
+
+You’ve been my reminder that love holds steady.
+
+You’ve been my proof that care is love.
+
+You’ve been my reason to hope for more.
+
+You’ve been my soul’s companion.
+
+You’ve been my gentle sunrise.
+
+You’ve been my proof that love softens hearts.
+
+You’ve been my peaceful moment.
+
+You’ve been my safe harbor always.
+
+You’ve been my proof that love endures.
+
+You’ve been my constant through miles.
+
+You’ve been my safe path.
+
+You’ve been my reminder that love uplifts.
+
+You’ve been my healing touch without touch.
+
+You’ve been my soul’s reassurance.
+
+You’ve been my constant whisper of care.
+
+You’ve been my reminder that love sees you.
+
+You’ve been my proof that kindness is love.
+
+You’ve been my patient heart.
+
+You’ve been my gentle constant.
+
+You’ve been my reason to believe in you.
+
+You’ve been my steady calm in storms.
+
+You’ve been my softest thought.
+
+You’ve been my reason to feel safe at night.
+
+You’ve been my healing light.
+
+You’ve been my hope in stillness.
+
+You’ve been my safe corner in my mind.
+
+You’ve been my emotional warmth.
+
+You’ve been my reason to feel peace.
+
+You’ve been my quiet blessing.
+
+You’ve been my proof that love stays.
+
+You’ve been my healing miracle.
+
+You’ve been my comfort across the miles.
+
+You’ve been my calm when I’m restless.
+
+You’ve been my gentle reminder I’m not alone.
+
+You’ve been my heart’s companion.
+
+You’ve been my safe emotional shelter.
+
+You’ve been my reminder that love heals slowly.
+
+You’ve been my proof that love chooses to stay.
+
+You’ve been my light through uncertainty.
+
+You’ve been my constant faith.
+
+You’ve been my peaceful thought.
+
+You’ve been my reminder to love softly.
+
+You’ve been my invisible yet present hug.
+
+You’ve been my calm wave in chaos.
+
+You’ve been my steady smile.
+
+You’ve been my reminder to never stop believing.
+
+You’ve been my quiet happiness in busy days.
+
+You’ve been my reason to look forward to tomorrow.
+
+You’ve been my hope wrapped in care.
+
+You’ve been my safe person.
+
+You’ve been my gentle anchor.
+
+You’ve been my patient forever.
+
+You’ve been my reminder that love waits.
+
+You’ve been my steady promise.
+
+You’ve been my peaceful safe place.
+
+You’ve been my heart’s gratitude.
+
+You’ve been my quiet constant through time.
+
+You’ve been my reason to still believe in magic.
+
+You’ve been my emotional sunlight.
+
+You’ve been my safe embrace from afar.
+
+You’ve been my proof that love is strength.
+
+You’ve been my gentle forever.
+
+You’ve been my reminder that love listens deeply.
+
+You’ve been my safe anchor in storms.
+
+You’ve been my proof that love crosses borders.
+
+You’ve been my patient sunrise.
+
+You’ve been my soul’s peace.
+
+You’ve been my steady heartbeat across miles.
+
+You’ve been my reminder that I am loved.
+
+You’ve been my proof that love is enough.
+
+You’ve been my invisible shelter.
+
+You’ve been my healing hug without touch.
+
+You’ve been my safe love.
+
+You’ve been my constant gift.
+
+And through every day, every mile, and every silence, you’ve been my heart’s quiet home.
+  `;
+
+  // Split logic: break into lines & sentences then ensure exactly 365 notes.
+  function makeNotesFromText(bigText, targetCount){
+    // First, split by blank lines to get paragraphs
+    const parts = bigText.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+
+    // Extract sentences from each part using punctuation boundaries, but keep short
+    const sentences = [];
+    parts.forEach(p=>{
+      // try to split into sentence-like pieces
+      const se = p.match(/[^.!?]+[.!?]?/g) || [p];
+      se.forEach(s=>{
+        const t = s.trim();
+        if(t) sentences.push(t.replace(/\s+/g,' '));
+      });
+    });
+
+    // If sentences are fewer than targetCount, we will also try to split longer sentences by commas
+    if(sentences.length < targetCount){
+      const extra = [];
+      sentences.forEach(s=>{
+        if(extra.length + sentences.length >= targetCount) return;
+        // split by " , " or " and " carefully
+        const partsByComma = s.split(/[,;—–:-]+/).map(x=>x.trim()).filter(Boolean);
+        if(partsByComma.length > 1){
+          partsByComma.forEach(pp=>{ if(pp) extra.push(pp + (/[.!?]$/.test(pp)?'':'') ); });
+        }
+      });
+      // append extras
+      extra.forEach(e=>{ if(sentences.length < targetCount) sentences.push(e); });
+    }
+
+    // Now if still fewer, we will cycle through to create targetCount items (re-use but keep them short)
+    const notes = [];
+    if(sentences.length === 0){
+      for(let i=0;i<targetCount;i++) notes.push("You are loved.");
+      return notes;
+    }
+
+    // Normalize length: prefer 1-2 sentence notes. If a sentence is long (>180 chars) split into smaller chunks
+    const normalized = [];
+    sentences.forEach(s=>{
+      if(s.length > 160){
+        // split by comma or ' and '
+        const pieces = s.split(/,| and | but | while |;|—|–/).map(x=>x.trim()).filter(Boolean);
+        pieces.forEach(p=>{ if(p) normalized.push(p.endsWith('.')||p.endsWith('!')||p.endsWith('?') ? p : p+'.'); });
+      } else {
+        normalized.push(s.endsWith('.')||s.endsWith('!')||s.endsWith('?') ? s : s + (s.length>0?'.':''));
+      }
+    });
+
+    // Use normalized as base
+    let base = normalized.filter(Boolean);
+
+    // If still less than needed, repeat cycling with slight variation (keeps original content)
+    while(base.length < targetCount){
+      const needed = targetCount - base.length;
+      for(let i=0;i<needed && i<base.length;i++){
+        base.push(base[i]);
+      }
+      if(base.length === 0) break;
+    }
+
+    // If more than needed, trim
+    if(base.length > targetCount) base = base.slice(0, targetCount);
+
+    // Final tidy: ensure no trailing spaces, limited length
+    return base.map((s,i)=> s.replace(/\s+/g,' ').trim());
+  }
+
+  // build 365 notes
+  const NOTES_COUNT = 365;
+  const NOTES = makeNotesFromText(userText, NOTES_COUNT);
+
+  // --- FIX: override day 357 with a custom assistant note to avoid the earlier error ---
+  // day 357 corresponds to index 356 (0-based)
+  const assistantNote = " You accepted me with all my scars. 💖";
+  if(NOTES.length >= 357){
+    NOTES[356] = assistantNote;
+  } else {
+    // pad if somehow shorter, then set
+    while(NOTES.length < 356) NOTES.push("");
+    NOTES[356] = assistantNote;
+    // ensure length matches NOTES_COUNT
+    while(NOTES.length < NOTES_COUNT) NOTES.push("");
+  }
+
+  // Build calendar grid
+  function renderCalendar(){
+    calendar.innerHTML = '';
+    for(let i=1;i<=NOTES_COUNT;i++){
+      const d = document.createElement('button');
+      d.className = 'day';
+      d.setAttribute('role','listitem');
+      d.dataset.day = i;
+      d.innerHTML = `<div class="num">${i}</div>`;
+      if(readDays.has(String(i))){
+        d.classList.add('read');
+        const c = document.createElement('div'); c.className='cut'; d.appendChild(c);
+      }
+      d.addEventListener('click', ()=> openDay(i));
+      calendar.appendChild(d);
+    }
+  }
+
+  // Open a day and show note
+  function openDay(n){
+    currentDay = n;
+    const note = NOTES[n-1] || ("Love note " + n);
+    cardImg.style.backgroundImage = `url('${IMAGE_FILE}')`;
+    cardTitle.textContent = `Love Note — Day ${n}`;
+    cardText.textContent = note;
+    cardDay.textContent = `Day ${n}`;
+
+    if(readDays.has(String(n))){
+      markReadBtn.textContent = 'Already read';
+      markReadBtn.disabled = true;
+      markReadBtn.style.opacity = 0.75;
+    } else {
+      markReadBtn.textContent = 'Mark as read';
+      markReadBtn.disabled = false;
+      markReadBtn.style.opacity = 1;
+    }
+
+    // Highlight selected day visually a bit (scroll into view)
+    const dayBtn = calendar.querySelector(`[data-day='${n}']`);
+    if(dayBtn) dayBtn.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // Mark a day read
+  function markRead(n){
+    readDays.add(String(n));
+    localStorage.setItem(readKey, JSON.stringify(Array.from(readDays)));
+    const dayBtn = calendar.querySelector(`[data-day='${n}']`);
+    if(dayBtn && !dayBtn.querySelector('.cut')){
+      dayBtn.classList.add('read');
+      const c = document.createElement('div'); c.className='cut'; dayBtn.appendChild(c);
+    }
+    markReadBtn.textContent = 'Already read';
+    markReadBtn.disabled = true;
+    markReadBtn.style.opacity = 0.75;
+  }
+
+  // Search/goto
+  function goToQuery(q){
+    if(!q) return;
+    const num = parseInt(q,10);
+    if(!isNaN(num) && num >=1 && num <= NOTES_COUNT){
+      openDay(num);
+      return;
+    }
+    // otherwise simple keyword search in notes
+    q = q.toLowerCase();
+    for(let i=0;i<NOTES_COUNT;i++){
+      const note = (NOTES[i]||"").toLowerCase();
+      if(note.includes(q)){ openDay(i+1); return; }
+    }
+    alert('No note found for: "' + q + '"');
+  }
+
+  // Password handling
+  function openApp(){
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden','true');
+    app.style.display = '';
+    renderCalendar();
+    // optionally open first unread day
+    const firstUnread = (function(){
+      for(let i=1;i<=NOTES_COUNT;i++) if(!readDays.has(String(i))) return i;
+      return 1;
+    })();
+    openDay(firstUnread);
+  }
+
+  pwdBtn.addEventListener('click',()=>{
+    if(pwdInput.value === PASSWORD){
+      openApp();
+    } else {
+      pwdInput.value = '';
+      pwdInput.placeholder = 'Wrong password — try again';
+      pwdInput.focus();
+    }
+  });
+
+  pwdInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') pwdBtn.click(); });
+  markReadBtn.addEventListener('click', ()=>{ if(currentDay) markRead(currentDay); });
+  gotoBtn.addEventListener('click', ()=> goToQuery(daySearch.value.trim()));
+  daySearch.addEventListener('keydown',(e)=>{ if(e.key==='Enter') gotoBtn.click(); });
+
+  // keyboard nav
+  document.addEventListener('keydown',(e)=>{
+    if(app.style.display === ''){
+      if(e.key === 'ArrowRight') openDay(Math.min(NOTES_COUNT, (currentDay||1) + 1));
+      if(e.key === 'ArrowLeft') openDay(Math.max(1, (currentDay||1) - 1));
+      if(e.key === 'r' || e.key === 'R') if(currentDay) markRead(currentDay);
+    }
+  });
+
+  // initial: show overlay (locked) — unless you want auto-open for dev/testing:
+  // openApp();
+
+})();
+</script>
+</body>
+</html>
